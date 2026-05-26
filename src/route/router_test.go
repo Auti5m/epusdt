@@ -240,7 +240,7 @@ func TestCreateOrderGmpayV1Solana(t *testing.T) {
 		"token":      "usdt",
 		"currency":   "cny",
 		"network":    "solana",
-		"notify_url": "http://localhost/notify",
+		"notify_url": "https://93.184.216.34/notify",
 	})
 
 	rec := doPost(e, "/payments/gmpay/v1/order/create-transaction", body)
@@ -269,6 +269,24 @@ func TestCreateOrderGmpayV1Solana(t *testing.T) {
 	t.Logf("Order created: trade_id=%v address=%v amount=%v", data["trade_id"], data["receive_address"], data["actual_amount"])
 }
 
+func TestCreateOrderGmpayRejectsPrivateNotifyURL(t *testing.T) {
+	e := setupTestEnv(t)
+
+	body := signBody(map[string]interface{}{
+		"order_id":   "test-private-notify-001",
+		"amount":     1.00,
+		"token":      "usdt",
+		"currency":   "cny",
+		"network":    "solana",
+		"notify_url": "http://127.0.0.1/notify",
+	})
+
+	rec := doPost(e, "/payments/gmpay/v1/order/create-transaction", body)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 // TestCreateOrderGmpayV1SolNative tests creating an order for native SOL token.
 func TestCreateOrderGmpayV1SolNative(t *testing.T) {
 	e := setupTestEnv(t)
@@ -279,7 +297,7 @@ func TestCreateOrderGmpayV1SolNative(t *testing.T) {
 		"token":      "sol",
 		"currency":   "usd",
 		"network":    "solana",
-		"notify_url": "http://localhost/notify",
+		"notify_url": "https://93.184.216.34/notify",
 	})
 
 	rec := doPost(e, "/payments/gmpay/v1/order/create-transaction", body)
@@ -334,7 +352,7 @@ func TestCreateOrderGmpayV1FormData(t *testing.T) {
 		"token":      {"usdt"},
 		"currency":   {"cny"},
 		"network":    {"solana"},
-		"notify_url": {"http://localhost/notify"},
+		"notify_url": {"https://93.184.216.34/notify"},
 	})
 
 	rec := doFormPost(e, "/payments/gmpay/v1/order/create-transaction", values)
@@ -688,7 +706,7 @@ func seedOkPayNotifyFixture(t *testing.T) *okPayNotifyFixture {
 		Token:          "USDT",
 		Network:        mdb.NetworkTron,
 		Status:         mdb.StatusWaitPay,
-		NotifyUrl:      "http://localhost/notify",
+		NotifyUrl:      "https://93.184.216.34/notify",
 		PaymentType:    mdb.PaymentTypeEpay,
 		PayProvider:    mdb.PaymentProviderOnChain,
 	}
@@ -928,7 +946,7 @@ func TestCreateOrderNetworkIsolation(t *testing.T) {
 		"token":      "usdt",
 		"currency":   "cny",
 		"network":    "solana",
-		"notify_url": "http://localhost/notify",
+		"notify_url": "https://93.184.216.34/notify",
 	})
 	rec := doPost(e, "/payments/gmpay/v1/order/create-transaction", body)
 
@@ -956,7 +974,7 @@ func TestEpaySubmitPhpGetCompatible(t *testing.T) {
 		"type":         {"alipay"},
 		"money":        {"1.00"},
 		"out_trade_no": {"epay-get-001"},
-		"notify_url":   {"http://localhost/notify"},
+		"notify_url":   {"https://93.184.216.34/notify"},
 		"return_url":   {"http://localhost/return"},
 	})
 
@@ -981,7 +999,7 @@ func TestEpaySubmitPhpPostFormCompatible(t *testing.T) {
 		"type":         {"alipay"},
 		"money":        {"1.00"},
 		"out_trade_no": {"epay-post-001"},
-		"notify_url":   {"http://localhost/notify"},
+		"notify_url":   {"https://93.184.216.34/notify"},
 		"return_url":   {"http://localhost/return"},
 		"sitename":     {"example-shop"},
 	})
@@ -1162,7 +1180,7 @@ func createCheckoutCounterRespTestOrder(t *testing.T, e *echo.Echo, orderID stri
 		"token":        "usdt",
 		"currency":     "cny",
 		"network":      "tron",
-		"notify_url":   "http://localhost/notify",
+		"notify_url":   "https://93.184.216.34/notify",
 		"redirect_url": "https://merchant.example/return",
 	})
 	rec := doPost(e, "/payments/gmpay/v1/order/create-transaction", body)
@@ -1252,7 +1270,7 @@ func TestSwitchNetwork_WithOrder(t *testing.T) {
 		"token":      "usdt",
 		"currency":   "cny",
 		"network":    "solana",
-		"notify_url": "http://localhost/notify",
+		"notify_url": "https://93.184.216.34/notify",
 	})
 	createRec := doPost(e, "/payments/gmpay/v1/order/create-transaction", createBody)
 	if createRec.Code != http.StatusOK {
@@ -1344,7 +1362,7 @@ func TestSwitchNetwork_OkPayCreatesProviderSubOrder(t *testing.T) {
 		"token":      "usdt",
 		"currency":   "cny",
 		"network":    "solana",
-		"notify_url": "http://localhost/notify",
+		"notify_url": "https://93.184.216.34/notify",
 	})
 	createRec := doPost(e, "/payments/gmpay/v1/order/create-transaction", createBody)
 	if createRec.Code != http.StatusOK {
@@ -1441,7 +1459,7 @@ func TestSwitchNetwork_OkPayIntegration(t *testing.T) {
 		"token":      "usdt",
 		"currency":   "cny",
 		"network":    "solana",
-		"notify_url": "http://localhost/notify",
+		"notify_url": "https://93.184.216.34/notify",
 	})
 	createRec := doPost(e, "/payments/gmpay/v1/order/create-transaction", createBody)
 	if createRec.Code != http.StatusOK {

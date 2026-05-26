@@ -1035,12 +1035,53 @@ func TestAdminSettings_DeleteNonExistent(t *testing.T) {
 	}
 }
 
+func TestAdminSettings_RejectsPrivateRateAPIURL(t *testing.T) {
+	e, token := setupAdminTestEnv(t)
+
+	rec := doPutAdmin(e, "/admin/api/v1/settings", map[string]interface{}{
+		"items": []map[string]interface{}{
+			{"group": "rate", "key": mdb.SettingKeyRateApiUrl, "value": "http://127.0.0.1:8080/", "type": "string"},
+		},
+	}, token)
+	resp := assertOK(t, rec)
+	results, ok := resp["data"].([]interface{})
+	if !ok || len(results) != 1 {
+		t.Fatalf("expected one result, got %T %v", resp["data"], resp["data"])
+	}
+	result, _ := results[0].(map[string]interface{})
+	if result["ok"] != false {
+		t.Fatalf("private rate.api_url result = %v, want ok=false", result)
+	}
+	if got, _ := result["error"].(string); !strings.Contains(got, "rate.api_url invalid") {
+		t.Fatalf("private rate.api_url error = %q", got)
+	}
+}
+
+func TestAdminSettings_AllowsPublicRateAPIURL(t *testing.T) {
+	e, token := setupAdminTestEnv(t)
+
+	rec := doPutAdmin(e, "/admin/api/v1/settings", map[string]interface{}{
+		"items": []map[string]interface{}{
+			{"group": "rate", "key": mdb.SettingKeyRateApiUrl, "value": "https://93.184.216.34/rate", "type": "string"},
+		},
+	}, token)
+	resp := assertOK(t, rec)
+	results, ok := resp["data"].([]interface{})
+	if !ok || len(results) != 1 {
+		t.Fatalf("expected one result, got %T %v", resp["data"], resp["data"])
+	}
+	result, _ := results[0].(map[string]interface{})
+	if result["ok"] != true {
+		t.Fatalf("public rate.api_url result = %v, want ok=true", result)
+	}
+}
+
 func TestAdminSettings_DeleteThenReupsertRestoresSetting(t *testing.T) {
 	e, token := setupAdminTestEnv(t)
 
 	rec := doPutAdmin(e, "/admin/api/v1/settings", map[string]interface{}{
 		"items": []map[string]interface{}{
-			{"group": "rate", "key": mdb.SettingKeyRateApiUrl, "value": "https://rate.old.example", "type": "string"},
+			{"group": "rate", "key": mdb.SettingKeyRateApiUrl, "value": "https://93.184.216.34/rate-old", "type": "string"},
 		},
 	}, token)
 	assertOK(t, rec)
@@ -1053,7 +1094,7 @@ func TestAdminSettings_DeleteThenReupsertRestoresSetting(t *testing.T) {
 
 	rec = doPutAdmin(e, "/admin/api/v1/settings", map[string]interface{}{
 		"items": []map[string]interface{}{
-			{"group": "rate", "key": mdb.SettingKeyRateApiUrl, "value": "https://rate.new.example", "type": "string"},
+			{"group": "rate", "key": mdb.SettingKeyRateApiUrl, "value": "https://93.184.216.34/rate-new", "type": "string"},
 		},
 	}, token)
 	assertOK(t, rec)
@@ -1069,7 +1110,7 @@ func TestAdminSettings_DeleteThenReupsertRestoresSetting(t *testing.T) {
 		item, _ := row.(map[string]interface{})
 		if item["key"] == mdb.SettingKeyRateApiUrl {
 			found = true
-			if item["value"] != "https://rate.new.example" {
+			if item["value"] != "https://93.184.216.34/rate-new" {
 				t.Fatalf("rate.api_url value = %v, want new value", item["value"])
 			}
 		}
@@ -1350,7 +1391,7 @@ func TestAdminOrders_ListWithSubExcludesSubOrdersFromTopLevel(t *testing.T) {
 		"currency":     "CNY",
 		"token":        "USDT",
 		"network":      "tron",
-		"notify_url":   "https://merchant.example/callback",
+		"notify_url":   "https://93.184.216.34/callback",
 		"redirect_url": "https://merchant.example/redirect",
 	})
 	rec := doPost(e, "/payments/gmpay/v1/order/create-transaction", parentBody)

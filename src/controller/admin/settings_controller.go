@@ -10,6 +10,7 @@ import (
 	"github.com/GMWalletApp/epusdt/model/data"
 	"github.com/GMWalletApp/epusdt/model/mdb"
 	"github.com/GMWalletApp/epusdt/telegram"
+	"github.com/GMWalletApp/epusdt/util/security"
 	"github.com/labstack/echo/v4"
 )
 
@@ -204,6 +205,13 @@ func normalizeAndValidateSettingItem(group, key, value string) (string, error) {
 			return value, err
 		}
 		return normalized, nil
+	case mdb.SettingKeyRateApiUrl:
+		if strings.ToLower(strings.TrimSpace(group)) != mdb.SettingGroupRate {
+			return value, fmt.Errorf("%s must use group %s", key, mdb.SettingGroupRate)
+		}
+		if err := security.ValidatePublicHTTPURL(value); err != nil {
+			return value, fmt.Errorf("%s invalid: %w", key, err)
+		}
 	}
 	return value, nil
 }

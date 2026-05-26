@@ -26,7 +26,7 @@ func newCreateTransactionRequest(orderID string, amount float64) *request.Create
 		Token:     "USDT",
 		Network:   "tron",
 		Amount:    amount,
-		NotifyUrl: "https://merchant.example/callback",
+		NotifyUrl: "https://93.184.216.34/callback",
 	}
 }
 
@@ -48,6 +48,15 @@ func installMockHTTPClient(t *testing.T, handler roundTripFunc) {
 	t.Cleanup(func() {
 		http_client.ClientFactory = oldFactory
 	})
+}
+
+func TestCreateTransactionRejectsPrivateNotifyURL(t *testing.T) {
+	req := newCreateTransactionRequest("order_private_notify_url", 1)
+	req.NotifyUrl = "http://127.0.0.1/notify"
+
+	if _, err := CreateTransaction(req, nil); err == nil {
+		t.Fatal("CreateTransaction returned nil error for private notify_url")
+	}
 }
 
 func TestCreateTransactionAssignsIncrementedAmountsAndLocks(t *testing.T) {

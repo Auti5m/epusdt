@@ -17,6 +17,7 @@ import (
 	"github.com/GMWalletApp/epusdt/util/constant"
 	"github.com/GMWalletApp/epusdt/util/log"
 	"github.com/GMWalletApp/epusdt/util/math"
+	"github.com/GMWalletApp/epusdt/util/security"
 	"github.com/dromara/carbon/v2"
 	"github.com/shopspring/decimal"
 )
@@ -54,12 +55,17 @@ func normalizeOrderAddressByNetwork(network, address string) string {
 
 // CreateTransaction creates a new payment order.
 func CreateTransaction(req *request.CreateTransactionRequest, apiKey *mdb.ApiKey) (*response.CreateTransactionResponse, error) {
-	gCreateTransactionLock.Lock()
-	defer gCreateTransactionLock.Unlock()
-
 	token := strings.ToUpper(strings.TrimSpace(req.Token))
 	currency := strings.ToUpper(strings.TrimSpace(req.Currency))
 	network := strings.ToLower(strings.TrimSpace(req.Network))
+	notifyURL := strings.TrimSpace(req.NotifyUrl)
+	if err := security.ValidatePublicHTTPURL(notifyURL); err != nil {
+		return nil, err
+	}
+
+	gCreateTransactionLock.Lock()
+	defer gCreateTransactionLock.Unlock()
+
 	amountPrecision := data.GetAmountPrecision()
 	payAmount := math.MustParsePrecFloat64(req.Amount, amountPrecision)
 	rate := config.GetRateForCoin(strings.ToLower(token), strings.ToLower(currency))
@@ -116,7 +122,7 @@ func CreateTransaction(req *request.CreateTransactionRequest, apiKey *mdb.ApiKey
 		Token:          token,
 		Network:        network,
 		Status:         mdb.StatusWaitPay,
-		NotifyUrl:      req.NotifyUrl,
+		NotifyUrl:      notifyURL,
 		RedirectUrl:    req.RedirectUrl,
 		Name:           req.Name,
 		PaymentType:    req.PaymentType,
